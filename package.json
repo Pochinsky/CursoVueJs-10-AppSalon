@@ -1,0 +1,18 @@
+{
+  "name": "cursovuejs-10-appsalon-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Backend para AppSalon en MEVN",
+  "main": "index.js",
+  "scripts": {
+    "start": "node --watch index.js"
+  },
+  "author": "Tomas Guttman",
+  "license": "ISC",
+  "dependencies": {
+    "colors": "^1.4.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "mongoose": "^8.5.0"
+  }
+}
