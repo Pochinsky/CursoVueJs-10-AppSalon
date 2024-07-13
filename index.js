@@ -9,6 +9,7 @@ dotenv.config();
 
 // config app
 const app = express();
+app.use(express.json());
 
 // db conect
 db();
