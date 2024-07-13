@@ -1,6 +1,4 @@
-import mongoose from "mongoose";
 import Services from "../models/Services.js";
-import { services } from "../data/beautyServices.js";
 import { validateObjectId, handleNotFoundError } from "../utils/index.js";
 
 const createService = async (req, res) => {
@@ -25,8 +23,13 @@ const getServiceById = async (req, res) => {
   res.json(service);
 };
 
-const getServices = (req, res) => {
-  res.json(services);
+const getServices = async (req, res) => {
+  try {
+    const services = await Services.find();
+    res.json(services);
+  } catch (error) {
+    console.log(error);
+  }
 };
 
 const updateService = async (req, res) => {
