@@ -1,5 +1,6 @@
 import User from "../models/User.js";
 import { sendEmailVerification } from "../emails/authEmailService.js";
+import { generateJWT } from "../utils/index.js";
 
 const register = async (req, res) => {
   // all fields validate
@@ -68,9 +69,10 @@ const login = async (req, res) => {
     return res.status(401).json({ message: error.message });
   }
   // check password
-  if (await user.checkPassword(password))
-    return res.json({ message: "Usuario autenticado" });
-  else {
+  if (await user.checkPassword(password)) {
+    const token = generateJWT(user._id);
+    return res.json({ token });
+  } else {
     const error = new Error("La contraseña es incorrecta");
     return res.status(401).json({ message: error.message });
   }
