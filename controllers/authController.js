@@ -1,6 +1,9 @@
 import User from "../models/User.js";
-import { sendEmailVerification } from "../emails/authEmailService.js";
-import { generateJWT } from "../utils/index.js";
+import {
+  sendEmailVerification,
+  sendEmailPasswordReset,
+} from "../emails/authEmailService.js";
+import { generateJWT, uniqueId } from "../utils/index.js";
 
 const register = async (req, res) => {
   // all fields validate
@@ -57,7 +60,7 @@ const verifyAccount = async (req, res) => {
 
 const login = async (req, res) => {
   const { email, password } = req.body;
-  // user exists
+  // check if user exists
   const user = await User.findOne({ email });
   if (!user) {
     const error = new Error("La cuenta no existe");
@@ -78,9 +81,70 @@ const login = async (req, res) => {
   }
 };
 
+const forgotPassword = async (req, res) => {
+  const { email } = req.body;
+  // check if user exists
+  const user = await User.findOne({ email });
+  if (!user) {
+    const error = new Error("El usuario no existe");
+    return res.status(404).json({ message: error.message });
+  }
+  // generate token
+  try {
+    user.token = uniqueId();
+    const result = await user.save();
+    await sendEmailPasswordReset({
+      name: result.name,
+      email: result.email,
+      token: result.token,
+    });
+    return res.json({
+      message: "Te hemos enviado un email con las instrucciones",
+    });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+const verifyPasswordResetToken = async (req, res) => {
+  const { token } = req.params;
+  const isValidToken = await User.findOne({ token });
+  if (!isValidToken) {
+    const error = new Error("Hubo un error, token no válido");
+    return res.status(400).json({ message: error.message });
+  }
+  return res.json({ message: "Token válido" });
+};
+
+const updatePassword = async (req, res) => {
+  const { token } = req.params;
+  const user = await User.findOne({ token });
+  if (!user) {
+    const error = new Error("Hubo un error, token no válido");
+    return res.status(400).json({ message: error.message });
+  }
+  const { password } = req.body;
+  try {
+    user.token = "";
+    user.password = password;
+    await user.save();
+    return res.json({ message: "Contraseña modificada correctamente" });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 const user = async (req, res) => {
   const { user } = req;
   return res.json(user);
 };
 
-export { register, verifyAccount, login, user };
+export {
+  register,
+  verifyAccount,
+  login,
+  forgotPassword,
+  verifyPasswordResetToken,
+  updatePassword,
+  user,
+};
