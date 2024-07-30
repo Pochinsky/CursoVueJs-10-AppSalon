@@ -1,5 +1,6 @@
 import { parse, formatISO, startOfDay, endOfDay, isValid } from "date-fns";
 import Appointment from "../models/Appointment.js";
+import { validateObjectId, handleNotFoundError } from "../utils/index.js";
 
 const createAppointment = async (req, res) => {
   const appointment = req.body;
@@ -27,4 +28,48 @@ const getAppointmentsByDate = async (req, res) => {
   return res.json(appointments);
 };
 
-export { createAppointment, getAppointmentsByDate };
+const getAppointmentById = async (req, res) => {
+  const { id } = req.params;
+  // validate object id
+  if (validateObjectId(id, res)) return;
+  // validate exists
+  const appointment = await Appointment.findById(id).populate("services");
+  if (!appointment) return handleNotFoundError("La cita no existe", res);
+  if (appointment.user.toString() !== req.user._id.toString()) {
+    const error = new Error("No tienes los permisos");
+    return res.status(403).json({ message: error.message });
+  }
+  return res.json(appointment);
+};
+
+const updateAppointment = async (req, res) => {
+  const { id } = req.params;
+  // validate object id
+  if (validateObjectId(id, res)) return;
+  // validate exists
+  const appointment = await Appointment.findById(id).populate("services");
+  if (!appointment) return handleNotFoundError("La cita no existe", res);
+  if (appointment.user.toString() !== req.user._id.toString()) {
+    const error = new Error("No tienes los permisos");
+    return res.status(403).json({ message: error.message });
+  }
+  // update
+  const { date, time, totalAmount, services } = req.body;
+  appointment.date = date;
+  appointment.time = time;
+  appointment.totalAmount = totalAmount;
+  appointment.services = services;
+  try {
+    const result = await appointment.save();
+    return res.json({ message: "Cita actualizada correctamente" });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+export {
+  createAppointment,
+  getAppointmentsByDate,
+  getAppointmentById,
+  updateAppointment,
+};
