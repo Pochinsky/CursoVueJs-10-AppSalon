@@ -49,6 +49,7 @@ const updateAppointment = async (req, res) => {
   // validate exists
   const appointment = await Appointment.findById(id).populate("services");
   if (!appointment) return handleNotFoundError("La cita no existe", res);
+  // validate permissions
   if (appointment.user.toString() !== req.user._id.toString()) {
     const error = new Error("No tienes los permisos");
     return res.status(403).json({ message: error.message });
@@ -67,9 +68,30 @@ const updateAppointment = async (req, res) => {
   }
 };
 
+const deleteAppointment = async (req, res) => {
+  const { id } = req.params;
+  // validate object id
+  if (validateObjectId(id, res)) return;
+  // validate exists
+  const appointment = await Appointment.findById(id).populate("services");
+  if (!appointment) return handleNotFoundError("La cita no existe", res);
+  // validate permissions
+  if (appointment.user.toString() !== req.user._id.toString()) {
+    const error = new Error("No tienes los permisos");
+    return res.status(403).json({ message: error.message });
+  }
+  try {
+    await appointment.deleteOne();
+    return res.json({ message: "Cita cancelada exitosamente" });
+  } catch (error) {
+    console.log(error);
+  }
+};
+
 export {
   createAppointment,
   getAppointmentsByDate,
   getAppointmentById,
   updateAppointment,
+  deleteAppointment,
 };
